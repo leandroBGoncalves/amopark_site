@@ -1,12 +1,17 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, FileText, Trophy } from "lucide-react";
-import { siteConfig } from "@/lib/utils";
+import { CalendarDays, FileText, Handshake, Trophy } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import { ConquistaCard } from "@/components/ConquistaCard";
 import { EventoCard } from "@/components/EventoCard";
+import { HomeHeroCarousel } from "@/components/HomeHeroCarousel";
+import { ParceiroCard } from "@/components/ParceiroCard";
 import { OficioStatusBadge } from "@/components/OficioStatusBadge";
 import { getAllConquistas } from "@/lib/conquistas-db";
+import { listUpcomingPublishedEventos } from "@/lib/eventos-db";
+import { buildHomeCarouselSlides } from "@/lib/home-carousel";
+import { listPublishedParceiros } from "@/lib/parceiros-db";
 import { listHomeEventoHighlights } from "@/lib/eventos-db";
+import { listHomeParceiroHighlights } from "@/lib/parceiros-db";
 import { getAllOficios } from "@/lib/oficios-db";
 import { formatOficioTableDate } from "@/lib/oficios-display";
 import {
@@ -44,39 +49,41 @@ export default async function HomePage() {
     eventosDestaque = [];
   }
 
+  let parceirosDestaque: Awaited<ReturnType<typeof listHomeParceiroHighlights>> = [];
+  try {
+    parceirosDestaque = await listHomeParceiroHighlights(6);
+  } catch {
+    parceirosDestaque = [];
+  }
+
+  let carouselConquistas: Awaited<ReturnType<typeof getAllConquistas>> = [];
+  let carouselEventos: Awaited<ReturnType<typeof listUpcomingPublishedEventos>> = [];
+  let carouselParceiros: Awaited<ReturnType<typeof listPublishedParceiros>> = [];
+  try {
+    carouselConquistas = await getAllConquistas();
+  } catch {
+    carouselConquistas = [];
+  }
+  try {
+    carouselEventos = await listUpcomingPublishedEventos();
+  } catch {
+    carouselEventos = [];
+  }
+  try {
+    carouselParceiros = await listPublishedParceiros();
+  } catch {
+    carouselParceiros = [];
+  }
+
+  const heroSlides = buildHomeCarouselSlides({
+    conquistas: carouselConquistas,
+    eventos: carouselEventos,
+    parceiros: carouselParceiros,
+  });
+
   return (
     <>
-      <section className="relative overflow-hidden bg-gradient-to-b from-amopark-gray-light to-white px-4 py-16 sm:py-24 lg:py-32">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-amopark-charcoal sm:text-4xl lg:text-5xl">
-            {siteConfig.slogan}
-          </h1>
-          <p className="mt-4 text-lg text-amopark-charcoal/80 sm:text-xl">
-            {siteConfig.fullName} — canal oficial de transparência e
-            comunicação com os moradores do North Park.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href={ROUTES.transparencia}
-              className="inline-flex items-center gap-2 rounded-lg bg-amopark-blue px-5 py-2.5 font-medium text-white shadow-sm hover:bg-amopark-blue/90 transition-colors"
-            >
-              Ver Transparência
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href={ROUTES.contato}
-              className="inline-flex items-center gap-2 rounded-lg border border-amopark-charcoal/20 bg-white px-5 py-2.5 font-medium text-amopark-charcoal hover:bg-amopark-gray-light transition-colors"
-            >
-              Fale Conosco
-            </Link>
-          </div>
-        </div>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {["bg-amopark-red", "bg-amopark-orange", "bg-amopark-purple", "bg-amopark-blue", "bg-amopark-green", "bg-amopark-yellow"].map((c) => (
-            <span key={c} className={`h-2 w-2 rounded-full opacity-60 ${c}`} />
-          ))}
-        </div>
-      </section>
+      <HomeHeroCarousel slides={heroSlides} />
 
       {eventosDestaque.length > 0 && (
         <section className="border-t border-amopark-gray-light bg-gradient-to-b from-amopark-orange/10 to-white px-4 py-14 sm:px-6 lg:px-8">
@@ -99,6 +106,33 @@ export default async function HomePage() {
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {eventosDestaque.map((e) => (
                 <EventoCard key={e.id} evento={e} highlight={e.featuredHome} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {parceirosDestaque.length > 0 && (
+        <section className="border-t border-amopark-gray-light bg-gradient-to-b from-amopark-green/10 to-white px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="flex items-center gap-2 text-2xl font-bold text-amopark-charcoal">
+                <Handshake className="h-7 w-7 text-amopark-green" />
+                Parceiros da comunidade
+              </h2>
+              <Link
+                href={ROUTES.parceiros}
+                className="text-sm font-medium text-amopark-blue hover:underline"
+              >
+                Ver todos
+              </Link>
+            </div>
+            <p className="mt-2 text-sm text-amopark-charcoal/75">
+              Quem apoia o North Park de forma relevante.
+            </p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {parceirosDestaque.map((p) => (
+                <ParceiroCard key={p.id} parceiro={p} compact />
               ))}
             </div>
           </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   FileText,
+  Handshake,
   Loader2,
   Pencil,
   Trash2,
@@ -22,8 +23,9 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { AdminConquistasSection } from "./AdminConquistasSection";
 import { AdminEventosSection } from "./AdminEventosSection";
+import { AdminParceirosSection } from "./AdminParceirosSection";
 
-type AdminTab = "conquistas" | "eventos" | "transparencia";
+type AdminTab = "conquistas" | "eventos" | "parceiros" | "transparencia";
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -281,7 +283,7 @@ export function AdminDashboard() {
               }
             }}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
               activeTab === "conquistas"
                 ? "bg-white text-amopark-charcoal shadow-sm"
                 : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
@@ -304,11 +306,11 @@ export function AdminDashboard() {
               }
               if (e.key === "ArrowRight") {
                 e.preventDefault();
-                setActiveTab("transparencia");
+                setActiveTab("parceiros");
               }
             }}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
               activeTab === "eventos"
                 ? "bg-white text-amopark-charcoal shadow-sm"
                 : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
@@ -320,6 +322,33 @@ export function AdminDashboard() {
           <button
             type="button"
             role="tab"
+            id="tab-parceiros"
+            aria-selected={activeTab === "parceiros"}
+            aria-controls="panel-parceiros"
+            onClick={() => setActiveTab("parceiros")}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                setActiveTab("eventos");
+              }
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                setActiveTab("transparencia");
+              }
+            }}
+            className={cn(
+              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              activeTab === "parceiros"
+                ? "bg-white text-amopark-charcoal shadow-sm"
+                : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
+            )}
+          >
+            <Handshake className="h-4 w-4 shrink-0 text-amopark-green" />
+            Parceiros
+          </button>
+          <button
+            type="button"
+            role="tab"
             id="tab-transparencia"
             aria-selected={activeTab === "transparencia"}
             aria-controls="panel-transparencia"
@@ -327,11 +356,11 @@ export function AdminDashboard() {
             onKeyDown={(e) => {
               if (e.key === "ArrowLeft") {
                 e.preventDefault();
-                setActiveTab("eventos");
+                setActiveTab("parceiros");
               }
             }}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
               activeTab === "transparencia"
                 ? "bg-white text-amopark-charcoal shadow-sm"
                 : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
@@ -362,6 +391,17 @@ export function AdminDashboard() {
               className="outline-none"
             >
               <AdminEventosSection embedded />
+            </div>
+          )}
+
+          {activeTab === "parceiros" && (
+            <div
+              role="tabpanel"
+              id="panel-parceiros"
+              aria-labelledby="tab-parceiros"
+              className="outline-none"
+            >
+              <AdminParceirosSection embedded />
             </div>
           )}
 
