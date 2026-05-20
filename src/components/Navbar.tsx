@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: "Início", href: ROUTES.home },
   { label: "Transparência", href: ROUTES.transparencia },
+  { label: "Eventos", href: ROUTES.eventos },
   { label: "Notícias", href: ROUTES.noticias },
   { label: "Contato", href: ROUTES.contato },
 ];

@@ -17,8 +17,7 @@ export default function TransparenciaPage() {
         Transparência
       </h1>
       <p className="mt-2 text-amopark-charcoal/80">
-        Ofícios e solicitações publicados pela diretoria, com texto de apoio ao documento
-        (trecho do arquivo ou resumo informado no painel).
+        Ofícios e solicitações publicados pela diretoria.
       </p>
       <TransparenciaClient />
     </div>

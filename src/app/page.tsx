@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, FileText, Trophy } from "lucide-react";
+import { ArrowRight, CalendarDays, FileText, Trophy } from "lucide-react";
 import { siteConfig } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import { ConquistaCard } from "@/components/ConquistaCard";
+import { EventoCard } from "@/components/EventoCard";
 import { OficioStatusBadge } from "@/components/OficioStatusBadge";
+import { getAllConquistas } from "@/lib/conquistas-db";
+import { listHomeEventoHighlights } from "@/lib/eventos-db";
 import { getAllOficios } from "@/lib/oficios-db";
 import { formatOficioTableDate } from "@/lib/oficios-display";
 import {
@@ -18,37 +21,27 @@ import {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const ultimasConquistas = [
-  {
-    title: "Pavimentação da Rua das Flores",
-    description:
-      "Concluída a pavimentação asfáltica após petição encaminhada à prefeitura.",
-    date: "Março 2025",
-    colorIndex: 0,
-  },
-  {
-    title: "Iluminação LED no Parque",
-    description:
-      "Instalação de postes com iluminação LED em toda a área do parque central.",
-    date: "Fevereiro 2025",
-    colorIndex: 1,
-  },
-  {
-    title: "Coleta Seletiva no Bairro",
-    description:
-      "Parceria com a prefeitura para implantação de pontos de coleta seletiva.",
-    date: "Janeiro 2025",
-    colorIndex: 2,
-  },
-];
-
 export default async function HomePage() {
   let oficiosRecentes: Awaited<ReturnType<typeof getAllOficios>> = [];
+  let ultimasConquistas: Awaited<ReturnType<typeof getAllConquistas>> = [];
   try {
     const all = await getAllOficios();
     oficiosRecentes = all.slice(0, 3);
   } catch {
     oficiosRecentes = [];
+  }
+  try {
+    const conquistas = await getAllConquistas();
+    ultimasConquistas = conquistas.slice(0, 3);
+  } catch {
+    ultimasConquistas = [];
+  }
+
+  let eventosDestaque: Awaited<ReturnType<typeof listHomeEventoHighlights>> = [];
+  try {
+    eventosDestaque = await listHomeEventoHighlights(4);
+  } catch {
+    eventosDestaque = [];
   }
 
   return (
@@ -85,6 +78,33 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {eventosDestaque.length > 0 && (
+        <section className="border-t border-amopark-gray-light bg-gradient-to-b from-amopark-orange/10 to-white px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="flex items-center gap-2 text-2xl font-bold text-amopark-charcoal">
+                <CalendarDays className="h-7 w-7 text-amopark-orange" />
+                Próximos eventos
+              </h2>
+              <Link
+                href={ROUTES.eventos}
+                className="text-sm font-medium text-amopark-blue hover:underline"
+              >
+                Calendário completo
+              </Link>
+            </div>
+            <p className="mt-2 text-sm text-amopark-charcoal/75">
+              Destaques e datas já confirmadas no North Park.
+            </p>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {eventosDestaque.map((e) => (
+                <EventoCard key={e.id} evento={e} highlight={e.featuredHome} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="border-t border-amopark-gray-light bg-white px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-between gap-4">
@@ -100,15 +120,21 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {ultimasConquistas.map((c) => (
-              <ConquistaCard
-                key={c.title}
-                title={c.title}
-                description={c.description}
-                date={c.date}
-                colorIndex={c.colorIndex}
-              />
-            ))}
+            {ultimasConquistas.length === 0 ? (
+              <p className="col-span-full text-center text-sm text-amopark-charcoal/60 sm:col-span-2 lg:col-span-3">
+                Em breve: as conquistas cadastradas pelo painel administrativo aparecerão aqui.
+              </p>
+            ) : (
+              ultimasConquistas.map((c) => (
+                <ConquistaCard
+                  key={c.id}
+                  title={c.title}
+                  description={c.description}
+                  date={c.dateLabel ?? undefined}
+                  colorIndex={c.colorIndex}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>

@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
+import {
+  CalendarDays,
+  FileText,
+  Loader2,
+  Pencil,
+  Trash2,
+  Trophy,
+  Upload,
+  X,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { OficioRecord } from "@/lib/oficios-types";
 import {
   OFICIO_STATUS_VALUES,
@@ -10,9 +20,14 @@ import {
   oficioStatusLabel,
 } from "@/lib/oficios-status";
 import { createClient } from "@/lib/supabase/client";
+import { AdminConquistasSection } from "./AdminConquistasSection";
+import { AdminEventosSection } from "./AdminEventosSection";
+
+type AdminTab = "conquistas" | "eventos" | "transparencia";
 
 export function AdminDashboard() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<AdminTab>("conquistas");
   const [oficios, setOficios] = useState<OficioRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -226,24 +241,15 @@ export function AdminDashboard() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-16 text-amopark-charcoal/70">
-        <Loader2 className="h-10 w-10 animate-spin" />
-        Carregando...
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-amopark-charcoal">
-            Ofícios e documentos
+            Painel administrativo
           </h1>
           <p className="mt-1 text-sm text-amopark-charcoal/70">
-            Envie Word (.docx), PDF ou imagem. Em .docx, o texto do arquivo vira prévia no mural; em PDF/imagem use o resumo opcional.
+            Use as abas para cadastrar ou editar cada tipo de conteúdo exibido no site.
           </p>
         </div>
         <button
@@ -255,10 +261,128 @@ export function AdminDashboard() {
         </button>
       </div>
 
-      <section className="rounded-xl border border-amopark-gray-light bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-amopark-gray-light bg-white shadow-sm overflow-hidden">
+        <div
+          className="flex border-b border-amopark-gray-light bg-amopark-gray-light/40 p-1 gap-1 sm:gap-2"
+          role="tablist"
+          aria-label="Seções do painel"
+        >
+          <button
+            type="button"
+            role="tab"
+            id="tab-conquistas"
+            aria-selected={activeTab === "conquistas"}
+            aria-controls="panel-conquistas"
+            onClick={() => setActiveTab("conquistas")}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                setActiveTab("eventos");
+              }
+            }}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              activeTab === "conquistas"
+                ? "bg-white text-amopark-charcoal shadow-sm"
+                : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
+            )}
+          >
+            <Trophy className="h-4 w-4 shrink-0 text-amopark-yellow" />
+            Conquistas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-eventos"
+            aria-selected={activeTab === "eventos"}
+            aria-controls="panel-eventos"
+            onClick={() => setActiveTab("eventos")}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                setActiveTab("conquistas");
+              }
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                setActiveTab("transparencia");
+              }
+            }}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              activeTab === "eventos"
+                ? "bg-white text-amopark-charcoal shadow-sm"
+                : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
+            )}
+          >
+            <CalendarDays className="h-4 w-4 shrink-0 text-amopark-orange" />
+            Eventos
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-transparencia"
+            aria-selected={activeTab === "transparencia"}
+            aria-controls="panel-transparencia"
+            onClick={() => setActiveTab("transparencia")}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                setActiveTab("eventos");
+              }
+            }}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              activeTab === "transparencia"
+                ? "bg-white text-amopark-charcoal shadow-sm"
+                : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
+            )}
+          >
+            <FileText className="h-4 w-4 shrink-0 text-amopark-blue" />
+            Transparência
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-6">
+          {activeTab === "conquistas" && (
+            <div
+              role="tabpanel"
+              id="panel-conquistas"
+              aria-labelledby="tab-conquistas"
+              className="outline-none"
+            >
+              <AdminConquistasSection embedded />
+            </div>
+          )}
+
+          {activeTab === "eventos" && (
+            <div
+              role="tabpanel"
+              id="panel-eventos"
+              aria-labelledby="tab-eventos"
+              className="outline-none"
+            >
+              <AdminEventosSection embedded />
+            </div>
+          )}
+
+          {activeTab === "transparencia" && (
+            <div
+              role="tabpanel"
+              id="panel-transparencia"
+              aria-labelledby="tab-transparencia"
+              className="outline-none space-y-8"
+            >
+              {loading ? (
+                <div className="flex flex-col items-center gap-3 py-16 text-amopark-charcoal/70">
+                  <Loader2 className="h-10 w-10 animate-spin" />
+                  Carregando ofícios...
+                </div>
+              ) : (
+                <>
+      <section className="rounded-xl border border-amopark-gray-light bg-amopark-gray-light/20 p-6 shadow-inner">
         <h2 className="flex items-center gap-2 font-semibold text-amopark-charcoal">
           <Upload className="h-5 w-5 text-amopark-blue" />
-          Novo documento
+          Novo documento (transparência)
         </h2>
         <form onSubmit={handleUpload} className="mt-4 space-y-4">
           <div>
@@ -434,6 +558,12 @@ export function AdminDashboard() {
           )}
         </ul>
       </section>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {editing && (
         <div

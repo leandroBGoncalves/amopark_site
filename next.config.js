@@ -1,7 +1,24 @@
 /** @type {import('next').NextConfig} */
+function supabaseImagePatterns() {
+  const url = process.env.SUPABASE_URL;
+  if (!url) return [];
+  try {
+    const { hostname } = new URL(url);
+    return [
+      {
+        protocol: "https",
+        hostname,
+        pathname: "/storage/v1/object/public/**",
+      },
+    ];
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig = {
   images: {
-    remotePatterns: [],
+    remotePatterns: supabaseImagePatterns(),
   },
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.SUPABASE_URL,

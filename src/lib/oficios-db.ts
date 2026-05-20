@@ -7,6 +7,7 @@ import {
 } from "./supabase/service";
 import { createServerSupabaseClient } from "./supabase/server";
 import { getSupabaseUrl } from "./supabase/env";
+import { sortOficiosChronologically } from "./oficios-sort";
 
 const BUCKET = "oficios";
 
@@ -65,7 +66,8 @@ export async function getAllOficios(): Promise<OficioRecord[]> {
       `Não foi possível carregar ofícios: ${error.message}. Verifique RLS (SELECT público em oficios) e SUPABASE_ANON_KEY.`
     );
   }
-  return ((data ?? []) as OficioRow[]).map(rowToRecord);
+  const records = ((data ?? []) as OficioRow[]).map(rowToRecord);
+  return sortOficiosChronologically(records);
 }
 
 export async function getOficioById(id: string): Promise<OficioRecord | null> {

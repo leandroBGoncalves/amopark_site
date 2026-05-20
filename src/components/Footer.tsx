@@ -37,10 +37,18 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  href={ROUTES.eventos}
+                  className="text-sm text-amopark-charcoal/80 hover:text-amopark-blue transition-colors"
+                >
+                  Eventos
+                </Link>
+              </li>
+              <li>
+                <Link
                   href={ROUTES.noticias}
                   className="text-sm text-amopark-charcoal/80 hover:text-amopark-blue transition-colors"
                 >
-                  Notícias e Eventos
+                  Notícias e conquistas
                 </Link>
               </li>
               <li>
