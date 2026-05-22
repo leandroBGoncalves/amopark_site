@@ -4,13 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { ROUTES } from "@/lib/constants";
+import { OFICIOS_NAV_LABEL, ROUTES } from "@/lib/constants";
 import { siteConfig } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Início", href: ROUTES.home },
-  { label: "Transparência", href: ROUTES.transparencia },
+  { label: OFICIOS_NAV_LABEL, href: ROUTES.oficios },
   { label: "Eventos", href: ROUTES.eventos },
   { label: "Parceiros", href: ROUTES.parceiros },
   { label: "Notícias", href: ROUTES.noticias },

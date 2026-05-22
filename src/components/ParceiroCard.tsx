@@ -8,7 +8,7 @@ import {
   UserRound,
 } from "lucide-react";
 import type { ParceiroRecord } from "@/lib/parceiros-types";
-import { PARCEIRO_TYPE_LABELS } from "@/lib/parceiros-types";
+import { parceiroBadgeLabel } from "@/lib/parceiros-types";
 import { cn } from "@/lib/utils";
 
 const typeIcons = {
@@ -28,7 +28,7 @@ export function ParceiroCard({
   className?: string;
 }) {
   const Icon = typeIcons[parceiro.partnerType];
-  const typeLabel = PARCEIRO_TYPE_LABELS[parceiro.partnerType];
+  const typeLabel = parceiroBadgeLabel(parceiro.partnerType);
 
   return (
     <Link

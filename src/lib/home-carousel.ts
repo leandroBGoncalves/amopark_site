@@ -3,7 +3,7 @@ import { ROUTES } from "./constants";
 import type { EventoListItem } from "./eventos-types";
 import { normalizeEventDate } from "./evento-calendar";
 import type { ParceiroRecord } from "./parceiros-types";
-import { PARCEIRO_TYPE_LABELS } from "./parceiros-types";
+import { parceiroBadgeLabel } from "./parceiros-types";
 import { siteConfig } from "./utils";
 
 export type HomeCarouselSlideKind = "conquista" | "evento" | "parceiro" | "welcome";
@@ -81,7 +81,7 @@ function slideFromParceiro(p: ParceiroRecord): HomeCarouselSlide {
   return {
     id: `parceiro-${p.id}`,
     kind: "parceiro",
-    badge: PARCEIRO_TYPE_LABELS[p.partnerType],
+    badge: parceiroBadgeLabel(p.partnerType),
     title: p.name,
     subtitle: truncate(p.summary, 200) || "Parceiro da comunidade North Park",
     href: `/parceiros/${p.slug}`,
@@ -97,9 +97,9 @@ function welcomeSlide(): HomeCarouselSlide {
     kind: "welcome",
     badge: siteConfig.name,
     title: siteConfig.slogan,
-    subtitle: `${siteConfig.fullName} — canal oficial de transparência e comunicação com os moradores do North Park.`,
-    href: ROUTES.transparencia,
-    ctaLabel: "Ver Transparência",
+    subtitle: `${siteConfig.fullName} — acompanhe ofícios, eventos e conquistas do bairro.`,
+    href: ROUTES.oficios,
+    ctaLabel: "Ver ofícios",
     imageUrl: null,
     panelClass: "bg-gradient-to-br from-amopark-blue/90 to-amopark-purple/70",
   };

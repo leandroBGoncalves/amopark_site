@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import { getPublishedParceiroBySlug } from "@/lib/parceiros-db";
-import { PARCEIRO_TYPE_LABELS } from "@/lib/parceiros-types";
+import { parceiroBadgeLabel } from "@/lib/parceiros-types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -47,7 +47,7 @@ export default async function ParceiroDetailPage({
   if (!parceiro) notFound();
 
   const Icon = typeIcons[parceiro.partnerType];
-  const typeLabel = PARCEIRO_TYPE_LABELS[parceiro.partnerType];
+  const typeLabel = parceiroBadgeLabel(parceiro.partnerType);
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">

@@ -367,7 +367,7 @@ export function AdminDashboard() {
             )}
           >
             <FileText className="h-4 w-4 shrink-0 text-amopark-blue" />
-            Transparência
+            Ofícios
           </button>
         </div>
 
@@ -422,7 +422,7 @@ export function AdminDashboard() {
       <section className="rounded-xl border border-amopark-gray-light bg-amopark-gray-light/20 p-6 shadow-inner">
         <h2 className="flex items-center gap-2 font-semibold text-amopark-charcoal">
           <Upload className="h-5 w-5 text-amopark-blue" />
-          Novo documento (transparência)
+          Publicar novo ofício
         </h2>
         <form onSubmit={handleUpload} className="mt-4 space-y-4">
           <div>

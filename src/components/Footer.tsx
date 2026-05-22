@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MessageCircle, Mail, FileText } from "lucide-react";
-import { ROUTES } from "@/lib/constants";
+import { OFICIOS_NAV_LABEL, ROUTES } from "@/lib/constants";
 import { siteConfig } from "@/lib/utils";
 
 export function Footer() {
@@ -29,10 +29,10 @@ export function Footer() {
             <ul className="mt-3 space-y-2">
               <li>
                 <Link
-                  href={ROUTES.transparencia}
+                  href={ROUTES.oficios}
                   className="text-sm text-amopark-charcoal/80 hover:text-amopark-blue transition-colors"
                 >
-                  Transparência
+                  {OFICIOS_NAV_LABEL}
                 </Link>
               </li>
               <li>

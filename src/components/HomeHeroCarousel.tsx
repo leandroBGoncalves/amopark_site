@@ -3,76 +3,55 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Building2,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Handshake,
-  Landmark,
-  Trophy,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import type { HomeCarouselSlide, HomeCarouselSlideKind } from "@/lib/home-carousel";
 import { ROUTES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, siteConfig } from "@/lib/utils";
+
+const AMOPARK_LOGO = "/logo-amopark.png";
 
 const INTERVAL_MS = 7000;
 
-const kindIcons: Record<HomeCarouselSlideKind, LucideIcon> = {
-  conquista: Trophy,
-  evento: CalendarDays,
-  parceiro: Handshake,
-  welcome: Trophy,
+/** Fundo suave por tipo de slide — alinhado às seções da home */
+const kindBackground: Record<HomeCarouselSlideKind, string> = {
+  conquista:
+    "bg-gradient-to-br from-amopark-blue/[0.07] via-white to-amopark-gray-light",
+  evento:
+    "bg-gradient-to-br from-amopark-orange/10 via-white to-amopark-gray-light",
+  parceiro:
+    "bg-gradient-to-br from-amopark-green/10 via-white to-amopark-gray-light",
+  welcome: "bg-gradient-to-b from-amopark-gray-light to-white",
 };
 
-function ParceiroKindIcon({
-  badge,
-  className,
-}: {
-  badge: string;
-  className?: string;
-}) {
-  if (badge.includes("Empresa")) return <Building2 className={className} />;
-  if (badge.includes("Político")) return <Landmark className={className} />;
-  if (badge.includes("Cidadão")) return <UserRound className={className} />;
-  return <Handshake className={className} />;
-}
-
 function SlideVisual({ slide }: { slide: HomeCarouselSlide }) {
-  const Icon = kindIcons[slide.kind];
-
-  if (slide.imageUrl) {
-    return (
-      <div className="relative mx-auto aspect-[16/10] w-full max-w-xl overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/25 lg:aspect-[4/3] lg:max-w-none">
-        <Image
-          src={slide.imageUrl}
-          alt=""
-          fill
-          className="object-cover"
-          sizes="(max-width: 1024px) 90vw, 50vw"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
-      </div>
-    );
-  }
+  const hasPhoto = Boolean(slide.imageUrl?.trim());
 
   return (
-    <div
-      className={cn(
-        "relative mx-auto flex aspect-[16/10] w-full max-w-xl items-center justify-center overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/20 lg:aspect-[4/3] lg:max-w-none",
-        slide.panelClass
-      )}
-    >
-      {slide.kind === "parceiro" ? (
-        <ParceiroKindIcon badge={slide.badge} className="h-24 w-24 text-white/90 sm:h-32 sm:w-32" />
+    <div className="relative mx-auto aspect-[16/10] w-full max-w-xl overflow-hidden rounded-2xl border border-amopark-gray-light bg-gradient-to-br from-white to-amopark-gray-light shadow-xl lg:aspect-[4/3] lg:max-w-none">
+      {hasPhoto ? (
+        <>
+          <Image
+            src={slide.imageUrl!}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 90vw, 50vw"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+        </>
       ) : (
-        <Icon className="h-24 w-24 text-white/90 sm:h-32 sm:w-32" />
+        <div className="absolute inset-0 flex items-center justify-center p-10 sm:p-14">
+          <Image
+            src={AMOPARK_LOGO}
+            alt={`Logo ${siteConfig.name}`}
+            width={240}
+            height={240}
+            className="h-auto w-full max-w-[200px] object-contain sm:max-w-[240px]"
+            priority
+          />
+        </div>
       )}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_55%)]" />
     </div>
   );
 }
@@ -99,55 +78,48 @@ export function HomeHeroCarousel({ slides }: { slides: HomeCarouselSlide[] }) {
 
   if (!current || count === 0) return null;
 
-  const hasImageBg = Boolean(current.imageUrl);
-
   return (
     <section
-      className="relative min-h-[520px] overflow-hidden bg-amopark-charcoal sm:min-h-[560px]"
+      className={cn(
+        "relative min-h-[520px] overflow-hidden border-b border-amopark-gray-light transition-colors duration-700 sm:min-h-[560px]",
+        kindBackground[current.kind]
+      )}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-roledescription="carrossel"
       aria-label="Destaques da AMOPARK"
     >
-      {hasImageBg && (
-        <div className="absolute inset-0 lg:hidden" aria-hidden>
-          <Image
-            src={current.imageUrl!}
-            alt=""
-            fill
-            className="object-cover opacity-40"
-            sizes="100vw"
-            priority
-          />
-        </div>
-      )}
       <div
-        className="absolute inset-0 bg-gradient-to-r from-amopark-charcoal via-amopark-charcoal/95 to-amopark-charcoal/80 lg:from-amopark-charcoal lg:via-amopark-charcoal/90 lg:to-amopark-charcoal/40"
+        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amopark-blue/[0.04] blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-amopark-orange/[0.06] blur-3xl"
         aria-hidden
       />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:py-16 lg:pl-8">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:pb-16 lg:pt-16">
         <div key={current.id} className="z-10 text-center lg:text-left">
-          <p className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/95 backdrop-blur-sm">
+          <p className="inline-flex rounded-full border border-amopark-blue/20 bg-amopark-blue/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amopark-blue">
             {current.badge}
           </p>
-          <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
+          <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-amopark-charcoal sm:text-4xl lg:text-[2.75rem]">
             {current.title}
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-white/85 sm:text-lg">
+          <p className="mt-4 text-base leading-relaxed text-amopark-charcoal/80 sm:text-lg">
             {current.subtitle}
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
             <Link
               href={current.href}
-              className="inline-flex items-center gap-2 rounded-lg bg-amopark-blue px-5 py-2.5 font-medium text-white shadow-lg hover:bg-amopark-blue/90 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-amopark-blue px-5 py-2.5 font-medium text-white shadow-sm hover:bg-amopark-blue/90 transition-colors"
             >
               {current.ctaLabel}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href={ROUTES.contato}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/35 bg-white/10 px-5 py-2.5 font-medium text-white backdrop-blur-sm hover:bg-white/20 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-amopark-charcoal/15 bg-white px-5 py-2.5 font-medium text-amopark-charcoal shadow-sm hover:bg-amopark-gray-light transition-colors"
             >
               Fale Conosco
             </Link>
@@ -167,7 +139,7 @@ export function HomeHeroCarousel({ slides }: { slides: HomeCarouselSlide[] }) {
           <button
             type="button"
             onClick={() => go(index - 1)}
-            className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-2.5 text-white backdrop-blur-sm hover:bg-black/50 sm:left-4"
+            className="absolute left-2 top-[42%] z-20 -translate-y-1/2 rounded-full border border-amopark-gray-light bg-white/95 p-2.5 text-amopark-charcoal shadow-md hover:bg-white sm:left-4"
             aria-label="Slide anterior"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -175,7 +147,7 @@ export function HomeHeroCarousel({ slides }: { slides: HomeCarouselSlide[] }) {
           <button
             type="button"
             onClick={() => go(index + 1)}
-            className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-2.5 text-white backdrop-blur-sm hover:bg-black/50 sm:right-4"
+            className="absolute right-2 top-[42%] z-20 -translate-y-1/2 rounded-full border border-amopark-gray-light bg-white/95 p-2.5 text-amopark-charcoal shadow-md hover:bg-white sm:right-4"
             aria-label="Próximo slide"
           >
             <ChevronRight className="h-5 w-5" />
@@ -183,9 +155,9 @@ export function HomeHeroCarousel({ slides }: { slides: HomeCarouselSlide[] }) {
         </>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-black/35 px-4 py-3 backdrop-blur-md">
+      <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-amopark-gray-light/80 bg-white/90 px-4 py-3 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 sm:flex-row sm:justify-between">
-          <p className="text-xs font-medium tabular-nums text-white/80">
+          <p className="text-xs font-medium tabular-nums text-amopark-charcoal/65">
             {index + 1} de {count}
           </p>
           {count > 1 && (
@@ -204,7 +176,9 @@ export function HomeHeroCarousel({ slides }: { slides: HomeCarouselSlide[] }) {
                   onClick={() => setIndex(i)}
                   className={cn(
                     "h-2 shrink-0 rounded-full transition-all duration-300",
-                    i === index ? "w-8 bg-white" : "w-2 bg-white/45 hover:bg-white/70"
+                    i === index
+                      ? "w-8 bg-amopark-blue"
+                      : "w-2 bg-amopark-charcoal/25 hover:bg-amopark-charcoal/40"
                   )}
                 />
               ))}

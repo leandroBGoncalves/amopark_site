@@ -13,10 +13,10 @@ export default function AdminLayout({
             AMOPARK — Admin
           </Link>
           <Link
-            href="/transparencia"
+            href="/oficios"
             className="text-sm text-amopark-blue hover:underline"
           >
-            Ver mural público
+            Ver mural de ofícios
           </Link>
         </div>
       </header>

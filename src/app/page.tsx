@@ -85,6 +85,66 @@ export default async function HomePage() {
     <>
       <HomeHeroCarousel slides={heroSlides} />
 
+      <section className="border-t border-amopark-gray-light bg-amopark-gray-light/30 px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="flex items-center gap-2 text-2xl font-bold text-amopark-charcoal">
+                <FileText className="h-7 w-7 text-amopark-blue" />
+                Ofícios enviados pela AMOPARK
+              </h2>
+              <p className="mt-1 text-sm text-amopark-charcoal/70">
+                Mural de transparência — últimos registros publicados
+              </p>
+            </div>
+            <Link
+              href={ROUTES.oficios}
+              className="shrink-0 text-sm font-medium text-amopark-blue hover:underline"
+            >
+              Ver mural completo
+            </Link>
+          </div>
+          <div className="mt-8 rounded-lg border border-amopark-gray-light bg-white shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº</TableHead>
+                  <TableHead>Assunto</TableHead>
+                  <TableHead>Destino</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden sm:table-cell">Data</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {oficiosRecentes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-sm text-amopark-charcoal/60 py-10">
+                      Nenhum ofício publicado ainda. Os documentos enviados pela diretoria aparecem aqui automaticamente.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  oficiosRecentes.map((o) => (
+                    <TableRow key={o.id}>
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {o.numeroOficio?.trim() || "—"}
+                      </TableCell>
+                      <TableCell>{o.name}</TableCell>
+                      <TableCell>{o.destinatario?.trim() || "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <OficioStatusBadge status={o.status} />
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {formatOficioTableDate(o.dataOficio, o.createdTime)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </section>
+
       {eventosDestaque.length > 0 && (
         <section className="border-t border-amopark-gray-light bg-gradient-to-b from-amopark-orange/10 to-white px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
@@ -169,61 +229,6 @@ export default async function HomePage() {
                 />
               ))
             )}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-amopark-gray-light bg-amopark-gray-light/30 px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="flex items-center gap-2 text-2xl font-bold text-amopark-charcoal">
-              <FileText className="h-7 w-7 text-amopark-blue" />
-              Transparência — Resumo dos Ofícios Enviados
-            </h2>
-            <Link
-              href={ROUTES.transparencia}
-              className="text-sm font-medium text-amopark-blue hover:underline"
-            >
-              Ver todos
-            </Link>
-          </div>
-          <div className="mt-8 rounded-lg border border-amopark-gray-light bg-white shadow-sm overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº</TableHead>
-                  <TableHead>Assunto</TableHead>
-                  <TableHead>Destino</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {oficiosRecentes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-amopark-charcoal/60 py-10">
-                      Nenhum ofício publicado ainda. Os documentos enviados pela diretoria aparecem aqui automaticamente.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  oficiosRecentes.map((o) => (
-                    <TableRow key={o.id}>
-                      <TableCell className="font-medium whitespace-nowrap">
-                        {o.numeroOficio?.trim() || "—"}
-                      </TableCell>
-                      <TableCell>{o.name}</TableCell>
-                      <TableCell>{o.destinatario?.trim() || "—"}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <OficioStatusBadge status={o.status} />
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {formatOficioTableDate(o.dataOficio, o.createdTime)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
           </div>
         </div>
       </section>

@@ -21,6 +21,12 @@ export const PARCEIRO_TYPE_ORDER: ParceiroType[] = [
   "cidadao",
 ];
 
+/** Badge no carrossel, cards e perfil — linguagem do bairro, não a categoria do admin. */
+export function parceiroBadgeLabel(type: ParceiroType): string {
+  if (type === "politico") return "Parceiro da comunidade";
+  return PARCEIRO_TYPE_LABELS[type];
+}
+
 export interface ParceiroRecord {
   id: string;
   name: string;
