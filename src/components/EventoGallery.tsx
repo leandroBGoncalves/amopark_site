@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { EventoMidiaRecord } from "@/lib/eventos-types";
 import { cn } from "@/lib/utils";
 
@@ -19,15 +20,16 @@ export function EventoGallery({
         {midias.map((m) => (
           <li key={m.id} className="space-y-2">
             {m.kind === "image" ? (
-              <div className="relative overflow-hidden rounded-lg border border-amopark-gray-light bg-amopark-gray-light/20">
-                <img
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-amopark-gray-light bg-amopark-gray-light/20">
+                <Image
                   src={m.url}
                   alt={m.caption || "Foto do evento"}
-                  className="h-56 w-full object-cover"
-                  loading="lazy"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
                 {m.isCover && (
-                  <span className="absolute left-2 top-2 rounded-full bg-amopark-orange px-2 py-0.5 text-[10px] font-semibold text-white shadow">
+                  <span className="absolute left-2 top-2 z-10 rounded-full bg-amopark-orange px-2 py-0.5 text-[10px] font-semibold text-white shadow">
                     Capa
                   </span>
                 )}

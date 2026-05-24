@@ -10,24 +10,13 @@ import {
 } from "@/lib/eventos-db";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { toApiErrorMessage } from "@/lib/supabase/postgrest-error";
+import {
+  isAcceptedImageMime,
+  processImageForUpload,
+} from "@/lib/image-processing";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
-
-function extFromMime(mime: string): string {
-  if (mime === "image/jpeg") return "jpg";
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  if (mime === "image/gif") return "gif";
-  return "bin";
-}
 
 export async function GET(
   _req: Request,
@@ -109,14 +98,14 @@ export async function POST(
       );
     }
     const mime = file.type || "application/octet-stream";
-    if (!IMAGE_TYPES.has(mime)) {
+    if (!isAcceptedImageMime(mime)) {
       return NextResponse.json(
         { error: "Use imagem JPEG, PNG, WebP ou GIF." },
         { status: 400 }
       );
     }
-    const buf = Buffer.from(await file.arrayBuffer());
-    if (buf.length > 8 * 1024 * 1024) {
+    const raw = Buffer.from(await file.arrayBuffer());
+    if (raw.length > 8 * 1024 * 1024) {
       return NextResponse.json(
         { error: "Imagem muito grande (máx. 8 MB)." },
         { status: 400 }
@@ -127,13 +116,25 @@ export async function POST(
         ? (form.get("caption") as string).trim() || null
         : null;
 
-    const ext = extFromMime(mime);
-    const storagePath = `${eventoId}/${randomUUID()}.${ext}`;
+    let processed;
+    try {
+      processed = await processImageForUpload(raw, mime, "evento-galeria");
+    } catch {
+      return NextResponse.json(
+        { error: "Não foi possível processar a imagem. Tente outro arquivo." },
+        { status: 400 }
+      );
+    }
+
+    const storagePath = `${eventoId}/${randomUUID()}.${processed.extension}`;
 
     const supabase = createServiceRoleClient();
     const { error: upErr } = await supabase.storage
       .from(EVENTOS_BUCKET)
-      .upload(storagePath, buf, { contentType: mime, upsert: false });
+      .upload(storagePath, processed.buffer, {
+        contentType: processed.contentType,
+        upsert: false,
+      });
 
     if (upErr) {
       throw new Error(upErr.message);
