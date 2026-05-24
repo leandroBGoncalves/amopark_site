@@ -4,6 +4,7 @@ import { ROUTES } from "@/lib/constants";
 import { ConquistaCard } from "@/components/ConquistaCard";
 import { EventoCard } from "@/components/EventoCard";
 import { HomeHeroCarousel } from "@/components/HomeHeroCarousel";
+import { HomeNewsletterCta } from "@/components/HomeNewsletterCta";
 import { ParceiroCard } from "@/components/ParceiroCard";
 import { OficioStatusBadge } from "@/components/OficioStatusBadge";
 import { getAllConquistas } from "@/lib/conquistas-db";
@@ -144,6 +145,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeNewsletterCta />
 
       {eventosDestaque.length > 0 && (
         <section className="border-t border-amopark-gray-light bg-gradient-to-b from-amopark-orange/10 to-white px-4 py-14 sm:px-6 lg:px-8">

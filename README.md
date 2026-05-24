@@ -32,6 +32,7 @@ A página **Transparência** lista os ofícios no **Supabase** (tabela `oficios`
 1. **`.env.local`**
    - Variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (e demais chaves do projeto).
    - Opcional: `NEXT_PUBLIC_SITE_URL`, links de redes (`NEXT_PUBLIC_*`).
+   - **Newsletter (Nodemailer):** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `NEWSLETTER_NOTIFY_EMAIL`. Veja `.env.example`. Sem SMTP, a inscrição é salva no banco, mas os e-mails automáticos não são enviados.
 
 2. **Fluxo**
    - Acesse **/admin/login**, entre com usuário admin e publique **.docx**, **PDF** ou **imagem**. Em `.docx`, o texto é extraído com Mammoth para a prévia; em PDF/imagem use o campo de resumo opcional no formulário.

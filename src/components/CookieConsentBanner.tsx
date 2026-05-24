@@ -14,13 +14,19 @@ export function CookieConsentBanner() {
     if (consent === null) setVisible(true);
   }, []);
 
+  const notifyConsentChange = () => {
+    window.dispatchEvent(new Event("cookie-consent-updated"));
+  };
+
   const accept = () => {
     localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
+    notifyConsentChange();
     setVisible(false);
   };
 
   const decline = () => {
     localStorage.setItem(COOKIE_CONSENT_KEY, "declined");
+    notifyConsentChange();
     setVisible(false);
   };
 

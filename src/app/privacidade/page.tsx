@@ -33,9 +33,10 @@ export default function PrivacidadePage() {
           </h2>
           <p>
             Podemos coletar dados fornecidos voluntariamente por você ao utilizar
-            formulários de contato, inscrições ou cookies de preferência. O site
-            utiliza cookies para consentimento (LGPD) e preferências de
-            navegação quando autorizado.
+            formulários de contato, inscrições na newsletter ou cookies de
+            preferência. Com seu consentimento, utilizamos medição anônima de
+            visitas (Vercel Analytics) para entender o uso do site. O banner de
+            cookies registra sua escolha (LGPD).
           </p>
         </section>
         <section>
