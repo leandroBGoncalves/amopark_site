@@ -6,6 +6,7 @@ import {
   CalendarDays,
   FileText,
   Handshake,
+  Inbox,
   Loader2,
   Pencil,
   Trash2,
@@ -24,8 +25,14 @@ import { createClient } from "@/lib/supabase/client";
 import { AdminConquistasSection } from "./AdminConquistasSection";
 import { AdminEventosSection } from "./AdminEventosSection";
 import { AdminParceirosSection } from "./AdminParceirosSection";
+import { AdminContatoSection } from "./AdminContatoSection";
 
-type AdminTab = "conquistas" | "eventos" | "parceiros" | "transparencia";
+type AdminTab =
+  | "conquistas"
+  | "eventos"
+  | "parceiros"
+  | "contato"
+  | "transparencia";
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -310,7 +317,7 @@ export function AdminDashboard() {
               }
             }}
             className={cn(
-              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-3",
               activeTab === "eventos"
                 ? "bg-white text-amopark-charcoal shadow-sm"
                 : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
@@ -333,11 +340,11 @@ export function AdminDashboard() {
               }
               if (e.key === "ArrowRight") {
                 e.preventDefault();
-                setActiveTab("transparencia");
+                setActiveTab("contato");
               }
             }}
             className={cn(
-              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-4",
+              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-3",
               activeTab === "parceiros"
                 ? "bg-white text-amopark-charcoal shadow-sm"
                 : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
@@ -349,6 +356,33 @@ export function AdminDashboard() {
           <button
             type="button"
             role="tab"
+            id="tab-contato"
+            aria-selected={activeTab === "contato"}
+            aria-controls="panel-contato"
+            onClick={() => setActiveTab("contato")}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                setActiveTab("parceiros");
+              }
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                setActiveTab("transparencia");
+              }
+            }}
+            className={cn(
+              "flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:flex-none sm:justify-start sm:px-3",
+              activeTab === "contato"
+                ? "bg-white text-amopark-charcoal shadow-sm"
+                : "text-amopark-charcoal/70 hover:bg-white/60 hover:text-amopark-charcoal"
+            )}
+          >
+            <Inbox className="h-4 w-4 shrink-0 text-amopark-purple" />
+            Contato
+          </button>
+          <button
+            type="button"
+            role="tab"
             id="tab-transparencia"
             aria-selected={activeTab === "transparencia"}
             aria-controls="panel-transparencia"
@@ -356,7 +390,7 @@ export function AdminDashboard() {
             onKeyDown={(e) => {
               if (e.key === "ArrowLeft") {
                 e.preventDefault();
-                setActiveTab("parceiros");
+                setActiveTab("contato");
               }
             }}
             className={cn(
@@ -402,6 +436,17 @@ export function AdminDashboard() {
               className="outline-none"
             >
               <AdminParceirosSection embedded />
+            </div>
+          )}
+
+          {activeTab === "contato" && (
+            <div
+              role="tabpanel"
+              id="panel-contato"
+              aria-labelledby="tab-contato"
+              className="outline-none"
+            >
+              <AdminContatoSection embedded />
             </div>
           )}
 
