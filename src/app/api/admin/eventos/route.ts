@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { scheduleEventoSubscriberNotify } from "@/lib/email/evento-notify";
 import { getCurrentUserAndAdmin } from "@/lib/oficios-db";
 import {
   ensureUniqueEventoSlug,
@@ -85,6 +86,20 @@ export async function POST(req: Request) {
       published,
       userId: auth.userId,
     });
+
+    scheduleEventoSubscriberNotify(
+      {
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        eventDate: row.event_date,
+        timeNote: row.time_note,
+        published: row.published,
+      },
+      "new",
+      "POST /api/admin/eventos"
+    );
+
     return NextResponse.json(row);
   } catch (err) {
     console.error("POST /api/admin/eventos:", err);

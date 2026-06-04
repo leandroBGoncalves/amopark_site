@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { scheduleEventoSubscriberNotify } from "@/lib/email/evento-notify";
 import { getCurrentUserAndAdmin } from "@/lib/oficios-db";
 import {
   deleteEventoAdmin,
@@ -63,6 +64,17 @@ export async function PATCH(
     }
     if (typeof body.published === "boolean") patch.published = body.published;
 
+    const before =
+      Object.keys(patch).length > 0 || body.cover_media_id !== undefined
+        ? await getEventoAdminById(id)
+        : null;
+    if (
+      (Object.keys(patch).length > 0 || body.cover_media_id !== undefined) &&
+      !before
+    ) {
+      return NextResponse.json({ error: "Evento não encontrado." }, { status: 404 });
+    }
+
     if (body.cover_media_id === null) {
       patch.cover_media_id = null;
     } else if (typeof body.cover_media_id === "string" && body.cover_media_id.trim()) {
@@ -70,6 +82,18 @@ export async function PATCH(
       if (!row) {
         return NextResponse.json({ error: "Evento não encontrado." }, { status: 404 });
       }
+      scheduleEventoSubscriberNotify(
+        {
+          slug: row.slug,
+          title: row.title,
+          summary: row.summary,
+          eventDate: row.event_date,
+          timeNote: row.time_note,
+          published: row.published,
+        },
+        "updated",
+        "PATCH /api/admin/eventos/[id] (capa)"
+      );
       return NextResponse.json(row);
     }
 
@@ -77,6 +101,22 @@ export async function PATCH(
     if (!row) {
       return NextResponse.json({ error: "Evento não encontrado." }, { status: 404 });
     }
+
+    const kind =
+      before && !before.published && row.published ? "new" : "updated";
+    scheduleEventoSubscriberNotify(
+      {
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        eventDate: row.event_date,
+        timeNote: row.time_note,
+        published: row.published,
+      },
+      kind,
+      "PATCH /api/admin/eventos/[id]"
+    );
+
     return NextResponse.json(row);
   } catch (err) {
     console.error("PATCH /api/admin/eventos/[id]:", err);

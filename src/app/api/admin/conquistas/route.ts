@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { notifySubscribersOfNewConquista } from "@/lib/email/content-broadcast-emails";
 import { getCurrentUserAndAdmin } from "@/lib/oficios-db";
 import { insertConquista } from "@/lib/conquistas-db";
 import { toApiErrorMessage } from "@/lib/supabase/postgrest-error";
@@ -42,6 +43,11 @@ export async function POST(req: Request) {
       colorIndex: Number.isNaN(colorIndex) ? 0 : colorIndex,
       userId: auth.userId,
     });
+
+    void notifySubscribersOfNewConquista(record).catch((err) => {
+      console.error("POST /api/admin/conquistas: aviso newsletter:", err);
+    });
+
     return NextResponse.json(record);
   } catch (err) {
     console.error("POST /api/admin/conquistas:", err);

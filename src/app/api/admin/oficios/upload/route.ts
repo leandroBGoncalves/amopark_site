@@ -11,6 +11,7 @@ import {
   UPLOAD_TYPE_HINT,
   normalizeUploadFile,
 } from "@/lib/oficios-upload";
+import { notifySubscribersOfNewOficio } from "@/lib/email/content-broadcast-emails";
 import {
   isOficioStatusValue,
   parseOficioStatus,
@@ -115,6 +116,10 @@ export async function POST(req: Request) {
       status,
       storagePath,
       userId: auth.userId,
+    });
+
+    void notifySubscribersOfNewOficio(record).catch((err) => {
+      console.error("POST /api/admin/oficios/upload: aviso newsletter:", err);
     });
 
     return NextResponse.json({ ok: true, oficio: record });

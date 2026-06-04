@@ -54,6 +54,29 @@ export async function insertNewsletterInscricao(params: {
   return "created";
 }
 
+export async function listNewsletterSubscribersForNotify(): Promise<
+  { email: string; nome: string | null }[]
+> {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("newsletter_inscricoes")
+    .select("email, nome")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    if (isNewsletterTableUnavailable(error)) {
+      console.warn("listNewsletterSubscribersForNotify: tabela indisponível.");
+      return [];
+    }
+    throw error;
+  }
+
+  return (data ?? []).map((row) => ({
+    email: (row as { email: string }).email,
+    nome: (row as { nome: string | null }).nome,
+  }));
+}
+
 export async function listNewsletterInscricoesAdmin(): Promise<NewsletterInscricaoRow[]> {
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
