@@ -36,6 +36,7 @@ export function AdminConquistasSection({
   const [description, setDescription] = useState("");
   const [dateLabel, setDateLabel] = useState("");
   const [colorIndex, setColorIndex] = useState(0);
+  const [featuredCarousel, setFeaturedCarousel] = useState(false);
   const [editing, setEditing] = useState<ConquistaRecord | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
@@ -97,6 +98,7 @@ export function AdminConquistasSection({
           description: description.trim(),
           date_label: dateLabel.trim() || null,
           color_index: colorIndex,
+          featured_carousel: featuredCarousel,
         }),
       });
       const data = await res.json();
@@ -109,6 +111,7 @@ export function AdminConquistasSection({
       setDescription("");
       setDateLabel("");
       setColorIndex(0);
+      setFeaturedCarousel(false);
       await load();
     } catch {
       setErr("Erro de rede.");
@@ -151,6 +154,7 @@ export function AdminConquistasSection({
       (form.elements.namedItem("ec_color") as HTMLSelectElement).value,
       10
     );
+    const carousel = (form.elements.namedItem("ec_carousel") as HTMLInputElement).checked;
 
     setSavingEdit(true);
     setEditErr(null);
@@ -163,6 +167,7 @@ export function AdminConquistasSection({
           description: desc,
           date_label: dl === "" ? null : dl,
           color_index: Number.isNaN(ci) ? 0 : ci,
+          featured_carousel: carousel,
         }),
       });
       const data = await res.json();
@@ -211,7 +216,8 @@ export function AdminConquistasSection({
         Últimas conquistas (home e notícias)
       </h2>
       <p className="text-sm text-amopark-charcoal/70">
-        As três mais recentes aparecem na página inicial; todas ficam em Notícias e Eventos.
+        As três mais recentes aparecem na página inicial; todas ficam em Notícias.
+        Marque <strong>carrossel</strong> para escolher o que entra no hero da home.
       </p>
 
       {tableSetupPending && (
@@ -327,6 +333,14 @@ export function AdminConquistasSection({
             </select>
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={featuredCarousel}
+            onChange={(e) => setFeaturedCarousel(e.target.checked)}
+          />
+          Exibir no carrossel da home
+        </label>
         {err && <p className="text-sm text-red-600">{err}</p>}
         {msg && <p className="text-sm text-amopark-green">{msg}</p>}
         <button
@@ -362,6 +376,7 @@ export function AdminConquistasSection({
                   <p className="mt-1 text-xs text-amopark-charcoal/50">
                     {c.dateLabel ?? "—"} ·{" "}
                     {COLOR_OPTIONS[c.colorIndex]?.label ?? `cor ${c.colorIndex}`} ·{" "}
+                    {c.featuredCarousel ? "carrossel · " : ""}
                     {new Date(c.createdAt).toLocaleString("pt-BR")}
                   </p>
                 </div>
@@ -488,6 +503,14 @@ export function AdminConquistasSection({
                   ))}
                 </select>
               </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="ec_carousel"
+                  defaultChecked={editing.featuredCarousel}
+                />
+                Exibir no carrossel da home
+              </label>
               {editErr && (
                 <p className="text-sm text-red-600">{editErr}</p>
               )}

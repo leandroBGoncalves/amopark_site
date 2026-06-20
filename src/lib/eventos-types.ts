@@ -1,4 +1,13 @@
+import type { ParceiroRecord } from "./parceiros-types";
+
 export type EventoMediaKind = "image" | "video_embed";
+
+export type EventoParceiroRole = "patrocinador" | "apoiador";
+
+export interface EventoParceirosGrouped {
+  patrocinadores: ParceiroRecord[];
+  apoiadores: ParceiroRecord[];
+}
 
 export interface EventoMidiaRecord {
   id: string;
@@ -19,6 +28,8 @@ export interface EventoListItem {
   timeNote: string | null;
   editionLabel: string | null;
   featuredHome: boolean;
+  festaJulinaLanding: boolean;
+  featuredCarousel: boolean;
   /** URL da foto de capa, se definida no painel admin. */
   coverImageUrl: string | null;
 }
@@ -26,4 +37,10 @@ export interface EventoListItem {
 export interface EventoDetailRecord extends EventoListItem {
   body: string;
   midias: EventoMidiaRecord[];
+  parceiros: EventoParceirosGrouped;
 }
+
+export const EMPTY_EVENTO_PARCEIROS: EventoParceirosGrouped = {
+  patrocinadores: [],
+  apoiadores: [],
+};

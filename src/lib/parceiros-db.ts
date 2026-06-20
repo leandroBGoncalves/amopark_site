@@ -18,12 +18,13 @@ export interface ParceiroRow {
   website_url: string | null;
   sort_order: number;
   featured_home: boolean;
+  featured_carousel: boolean;
   published: boolean;
   created_at: string;
   updated_at: string;
 }
 
-function rowToRecord(row: ParceiroRow): ParceiroRecord {
+export function mapParceiroRowToRecord(row: ParceiroRow): ParceiroRecord {
   return {
     id: row.id,
     name: row.name,
@@ -38,7 +39,12 @@ function rowToRecord(row: ParceiroRow): ParceiroRecord {
     sortOrder: row.sort_order,
     featuredHome: row.featured_home,
     published: row.published,
+    featuredCarousel: row.featured_carousel ?? false,
   };
+}
+
+function rowToRecord(row: ParceiroRow): ParceiroRecord {
+  return mapParceiroRowToRecord(row);
 }
 
 function isParceirosTableUnavailable(error: {
@@ -87,6 +93,28 @@ function parsePartnerType(value: unknown): ParceiroType {
     return value as ParceiroType;
   }
   return "cidadao";
+}
+
+export async function listCarouselPublishedParceiros(): Promise<ParceiroRecord[]> {
+  const supabase = createPublicReadClient();
+  const { data, error } = await supabase
+    .from("parceiros")
+    .select("*")
+    .eq("published", true)
+    .eq("featured_carousel", true)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) {
+    if (
+      isParceirosTableUnavailable(error) ||
+      (error.message ?? "").toLowerCase().includes("featured_carousel")
+    ) {
+      return [];
+    }
+    throw new Error(formatPostgrestError(error));
+  }
+  return ((data ?? []) as ParceiroRow[]).map(rowToRecord);
 }
 
 export async function listPublishedParceiros(): Promise<ParceiroRecord[]> {
@@ -193,6 +221,7 @@ export async function insertParceiroAdmin(params: {
   websiteUrl: string | null;
   sortOrder: number;
   featuredHome: boolean;
+  featuredCarousel?: boolean;
   published: boolean;
   userId: string;
 }): Promise<ParceiroRow> {
@@ -212,6 +241,7 @@ export async function insertParceiroAdmin(params: {
       website_url: params.websiteUrl?.trim() || null,
       sort_order: params.sortOrder,
       featured_home: params.featuredHome,
+      featured_carousel: params.featuredCarousel === true,
       published: params.published,
       created_by: params.userId,
       created_at: now,
@@ -234,6 +264,7 @@ export type ParceiroUpdatePayload = Partial<{
   logo_storage_path: string | null;
   sort_order: number;
   featured_home: boolean;
+  featured_carousel: boolean;
   published: boolean;
 }>;
 
@@ -265,6 +296,7 @@ export async function updateParceiroAdmin(
   }
   if (patch.sort_order !== undefined) row.sort_order = patch.sort_order;
   if (patch.featured_home !== undefined) row.featured_home = patch.featured_home;
+  if (patch.featured_carousel !== undefined) row.featured_carousel = patch.featured_carousel;
   if (patch.published !== undefined) row.published = patch.published;
 
   if (Object.keys(row).length === 1) {

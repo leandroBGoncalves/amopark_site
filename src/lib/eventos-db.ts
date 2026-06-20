@@ -2,7 +2,13 @@ import type {
   EventoDetailRecord,
   EventoListItem,
   EventoMidiaRecord,
+  EventoParceiroRole,
+  EventoParceirosGrouped,
 } from "./eventos-types";
+import { EMPTY_EVENTO_PARCEIROS } from "./eventos-types";
+import type { ParceiroRow } from "./parceiros-db";
+import { mapParceiroRowToRecord } from "./parceiros-db";
+import { FESTA_JULINA_EVENT_SLUG } from "./constants";
 import {
   createPublicReadClient,
   createServiceRoleClient,
@@ -15,7 +21,7 @@ import { youtubeUrlToEmbed } from "./evento-youtube";
 const BUCKET = "eventos";
 
 const EVENTO_LIST_SELECT = `
-  id, slug, title, summary, event_date, time_note, edition_label, featured_home, published,
+  id, slug, title, summary, event_date, time_note, edition_label, featured_home, festa_julina_landing, featured_carousel, published,
   cover_media_id,
   cover:evento_midias!cover_media_id ( storage_path, kind )
 `;
@@ -34,6 +40,8 @@ export interface EventoRow {
   time_note: string | null;
   edition_label: string | null;
   featured_home: boolean;
+  festa_julina_landing: boolean;
+  featured_carousel: boolean;
   published: boolean;
   cover_media_id: string | null;
   created_at: string;
@@ -89,6 +97,8 @@ function rowToListItem(row: EventoListRow): EventoListItem {
     timeNote: row.time_note,
     editionLabel: row.edition_label,
     featuredHome: row.featured_home,
+    festaJulinaLanding: row.festa_julina_landing ?? false,
+    featuredCarousel: row.featured_carousel ?? false,
     coverImageUrl: coverUrlFromEmbed(row.cover),
   };
 }
@@ -99,6 +109,100 @@ function isCoverColumnUnavailable(error: {
 }): boolean {
   const m = (error.message ?? "").toLowerCase();
   return m.includes("cover_media_id") || m.includes("cover_media");
+}
+
+function isFestaJulinaLandingColumnUnavailable(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  const m = (error.message ?? "").toLowerCase();
+  return m.includes("festa_julina_landing");
+}
+
+function isFeaturedCarouselColumnUnavailable(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  const m = (error.message ?? "").toLowerCase();
+  return m.includes("featured_carousel");
+}
+
+function isEventoParceirosTableUnavailable(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  if (error.code === "PGRST205") return true;
+  const m = (error.message ?? "").toLowerCase();
+  return m.includes("evento_parceiros");
+}
+
+type EventoParceiroJoinRow = {
+  role: EventoParceiroRole;
+  sort_order: number;
+  parceiro: ParceiroRow | ParceiroRow[] | null;
+};
+
+async function loadEventoParceirosGrouped(
+  eventoId: string,
+  publicRead: boolean
+): Promise<EventoParceirosGrouped> {
+  const supabase = publicRead
+    ? createPublicReadClient()
+    : createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from("evento_parceiros")
+    .select("role, sort_order, parceiro:parceiros (*)")
+    .eq("evento_id", eventoId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    if (isEventoParceirosTableUnavailable(error)) return EMPTY_EVENTO_PARCEIROS;
+    throw new Error(formatPostgrestError(error));
+  }
+
+  const patrocinadores: EventoParceirosGrouped["patrocinadores"] = [];
+  const apoiadores: EventoParceirosGrouped["apoiadores"] = [];
+
+  for (const row of (data ?? []) as EventoParceiroJoinRow[]) {
+    const raw = row.parceiro;
+    const pRow = Array.isArray(raw) ? raw[0] : raw;
+    if (!pRow || (publicRead && !pRow.published)) continue;
+    const rec = mapParceiroRowToRecord(pRow);
+    if (row.role === "patrocinador") patrocinadores.push(rec);
+    else if (row.role === "apoiador") apoiadores.push(rec);
+  }
+
+  return { patrocinadores, apoiadores };
+}
+
+async function buildEventoDetail(
+  row: EventoRow,
+  midias: EventoMidiaRow[],
+  publicRead: boolean
+): Promise<EventoDetailRecord> {
+  const coverId = row.cover_media_id ?? null;
+  const mrec = midias.map((m) => midiaRowToRecord(m, coverId));
+  const coverImageUrl =
+    mrec.find((m) => m.isCover && m.kind === "image")?.url ?? null;
+  const parceiros = await loadEventoParceirosGrouped(row.id, publicRead);
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    summary: row.summary,
+    eventDate: normalizeEventDate(String(row.event_date ?? "")),
+    timeNote: row.time_note,
+    editionLabel: row.edition_label,
+    featuredHome: row.featured_home,
+    festaJulinaLanding: row.festa_julina_landing ?? false,
+    featuredCarousel: row.featured_carousel ?? false,
+    coverImageUrl,
+    body: row.body,
+    midias: mrec,
+    parceiros,
+  };
 }
 
 function isEventosTableUnavailable(error: {
@@ -151,6 +255,12 @@ async function fetchPublishedEventosList(
   if (error && isCoverColumnUnavailable(error)) {
     ({ data, error } = await build(supabase, EVENTO_LIST_SELECT_LEGACY));
   }
+  if (error && isFestaJulinaLandingColumnUnavailable(error)) {
+    ({ data, error } = await build(supabase, EVENTO_LIST_SELECT_LEGACY));
+  }
+  if (error && isFeaturedCarouselColumnUnavailable(error)) {
+    ({ data, error } = await build(supabase, EVENTO_LIST_SELECT_LEGACY));
+  }
 
   if (error) {
     if (isEventosTableUnavailable(error)) {
@@ -160,6 +270,22 @@ async function fetchPublishedEventosList(
     throw new Error(formatPostgrestError(error));
   }
   return ((data ?? []) as EventoListRow[]).map(rowToListItem);
+}
+
+/** Eventos marcados para o carrossel da home. */
+export async function listCarouselPublishedEventos(): Promise<EventoListItem[]> {
+  try {
+    return await fetchPublishedEventosList((supabase, select) =>
+      supabase
+        .from("eventos")
+        .select(select)
+        .eq("published", true)
+        .eq("featured_carousel", true)
+        .order("event_date", { ascending: false })
+    );
+  } catch {
+    return [];
+  }
 }
 
 export async function listPublishedEventos(): Promise<EventoListItem[]> {
@@ -254,34 +380,55 @@ export async function getPublishedEventoBySlug(
 
   if (e2) {
     if (isEventosTableUnavailable(e2)) {
-      return {
-        ...rowToListItem(row),
-        body: row.body,
-        midias: [],
-      };
+      return buildEventoDetail(row, [], true);
     }
     throw new Error(formatPostgrestError(e2));
   }
 
-  const coverId = row.cover_media_id ?? null;
-  const mrec = ((midias ?? []) as EventoMidiaRow[]).map((m) =>
-    midiaRowToRecord(m, coverId)
-  );
-  const coverImageUrl =
-    mrec.find((m) => m.isCover && m.kind === "image")?.url ?? null;
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    summary: row.summary,
-    eventDate: normalizeEventDate(String(row.event_date ?? "")),
-    timeNote: row.time_note,
-    editionLabel: row.edition_label,
-    featuredHome: row.featured_home,
-    coverImageUrl,
-    body: row.body,
-    midias: mrec,
-  };
+  return buildEventoDetail(row, (midias ?? []) as EventoMidiaRow[], true);
+}
+
+/** Evento marcado como landing da Festa Julina em /festa-julina. */
+export async function getFestaJulinaLandingEvent(): Promise<EventoDetailRecord | null> {
+  const supabase = createPublicReadClient();
+  const { data: ev, error: e1 } = await supabase
+    .from("eventos")
+    .select("*")
+    .eq("published", true)
+    .eq("festa_julina_landing", true)
+    .order("event_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (e1) {
+    if (
+      isEventosTableUnavailable(e1) ||
+      isFestaJulinaLandingColumnUnavailable(e1)
+    ) {
+      return getPublishedEventoBySlug(FESTA_JULINA_EVENT_SLUG);
+    }
+    throw new Error(formatPostgrestError(e1));
+  }
+
+  if (!ev) {
+    return getPublishedEventoBySlug(FESTA_JULINA_EVENT_SLUG);
+  }
+
+  const row = ev as EventoRow;
+  const { data: midias, error: e2 } = await supabase
+    .from("evento_midias")
+    .select("*")
+    .eq("evento_id", row.id)
+    .order("sort_order", { ascending: true });
+
+  if (e2) {
+    if (isEventosTableUnavailable(e2)) {
+      return buildEventoDetail(row, [], true);
+    }
+    throw new Error(formatPostgrestError(e2));
+  }
+
+  return buildEventoDetail(row, (midias ?? []) as EventoMidiaRow[], true);
 }
 
 /** Admin: todos os eventos. */
@@ -329,6 +476,7 @@ export async function insertEventoAdmin(params: {
   timeNote: string | null;
   editionLabel: string | null;
   featuredHome: boolean;
+  featuredCarousel?: boolean;
   published: boolean;
   userId: string;
 }): Promise<EventoRow> {
@@ -345,6 +493,7 @@ export async function insertEventoAdmin(params: {
       time_note: params.timeNote?.trim() || null,
       edition_label: params.editionLabel?.trim() || null,
       featured_home: params.featuredHome,
+      featured_carousel: params.featuredCarousel === true,
       published: params.published,
       created_by: params.userId,
       created_at: now,
@@ -366,9 +515,106 @@ export type EventoUpdatePayload = Partial<{
   time_note: string | null;
   edition_label: string | null;
   featured_home: boolean;
+  festa_julina_landing: boolean;
+  featured_carousel: boolean;
   published: boolean;
   cover_media_id: string | null;
 }>;
+
+export type EventoParceirosInput = {
+  patrocinadores: string[];
+  apoiadores: string[];
+};
+
+async function clearOtherFestaJulinaLanding(exceptId: string): Promise<void> {
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase
+    .from("eventos")
+    .update({ festa_julina_landing: false, updated_at: new Date().toISOString() })
+    .eq("festa_julina_landing", true)
+    .neq("id", exceptId);
+  if (error && !isFestaJulinaLandingColumnUnavailable(error)) {
+    throw new Error(formatPostgrestError(error));
+  }
+}
+
+export async function getEventoParceirosAdmin(
+  eventoId: string
+): Promise<EventoParceirosInput> {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("evento_parceiros")
+    .select("parceiro_id, role, sort_order")
+    .eq("evento_id", eventoId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    if (isEventoParceirosTableUnavailable(error)) {
+      return { patrocinadores: [], apoiadores: [] };
+    }
+    throw new Error(formatPostgrestError(error));
+  }
+
+  const patrocinadores: string[] = [];
+  const apoiadores: string[] = [];
+  for (const row of data ?? []) {
+    const r = row as { parceiro_id: string; role: EventoParceiroRole };
+    if (r.role === "patrocinador") patrocinadores.push(r.parceiro_id);
+    else if (r.role === "apoiador") apoiadores.push(r.parceiro_id);
+  }
+  return { patrocinadores, apoiadores };
+}
+
+export async function replaceEventoParceirosAdmin(
+  eventoId: string,
+  input: EventoParceirosInput
+): Promise<void> {
+  const supabase = createServiceRoleClient();
+  const patrocinadores = Array.from(new Set(input.patrocinadores.filter(Boolean)));
+  const apoiadores = Array.from(new Set(input.apoiadores.filter(Boolean)));
+  const overlap = patrocinadores.filter((id) => apoiadores.includes(id));
+  if (overlap.length > 0) {
+    throw new Error("Um parceiro não pode ser patrocinador e apoiador ao mesmo tempo.");
+  }
+
+  const { error: delErr } = await supabase
+    .from("evento_parceiros")
+    .delete()
+    .eq("evento_id", eventoId);
+  if (delErr) {
+    if (isEventoParceirosTableUnavailable(delErr)) return;
+    throw new Error(formatPostgrestError(delErr));
+  }
+
+  const rows: {
+    evento_id: string;
+    parceiro_id: string;
+    role: EventoParceiroRole;
+    sort_order: number;
+  }[] = [];
+
+  patrocinadores.forEach((parceiroId, i) => {
+    rows.push({
+      evento_id: eventoId,
+      parceiro_id: parceiroId,
+      role: "patrocinador",
+      sort_order: i,
+    });
+  });
+  apoiadores.forEach((parceiroId, i) => {
+    rows.push({
+      evento_id: eventoId,
+      parceiro_id: parceiroId,
+      role: "apoiador",
+      sort_order: i,
+    });
+  });
+
+  if (rows.length === 0) return;
+
+  const { error: insErr } = await supabase.from("evento_parceiros").insert(rows);
+  if (insErr) throw new Error(formatPostgrestError(insErr));
+}
 
 /** Define ou remove a foto de capa (somente imagens da galeria do evento). */
 export async function setEventoCoverAdmin(
@@ -422,11 +668,21 @@ export async function updateEventoAdmin(
         : patch.edition_label.trim();
   }
   if (patch.featured_home !== undefined) row.featured_home = patch.featured_home;
+  if (patch.festa_julina_landing !== undefined) {
+    row.festa_julina_landing = patch.festa_julina_landing;
+  }
+  if (patch.featured_carousel !== undefined) {
+    row.featured_carousel = patch.featured_carousel;
+  }
   if (patch.published !== undefined) row.published = patch.published;
   if (patch.cover_media_id !== undefined) row.cover_media_id = patch.cover_media_id;
 
   if (Object.keys(row).length === 1) {
     return getEventoAdminById(id);
+  }
+
+  if (patch.festa_julina_landing === true) {
+    await clearOtherFestaJulinaLanding(id);
   }
 
   const { data, error } = await supabase

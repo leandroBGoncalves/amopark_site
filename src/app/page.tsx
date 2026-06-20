@@ -3,16 +3,20 @@ import { CalendarDays, FileText, Handshake, Trophy } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import { ConquistaCard } from "@/components/ConquistaCard";
 import { EventoCard } from "@/components/EventoCard";
+import { FestaJulinaHomeBanner } from "@/components/FestaJulinaHomeBanner";
 import { HomeHeroCarousel } from "@/components/HomeHeroCarousel";
+import { HomeFaleConoscoCta } from "@/components/HomeFaleConoscoCta";
 import { HomeNewsletterCta } from "@/components/HomeNewsletterCta";
 import { ParceiroCard } from "@/components/ParceiroCard";
 import { OficioStatusBadge } from "@/components/OficioStatusBadge";
 import { getAllConquistas } from "@/lib/conquistas-db";
-import { listUpcomingPublishedEventos } from "@/lib/eventos-db";
+import { listCarouselConquistas } from "@/lib/conquistas-db";
+import { listCarouselPublishedEventos } from "@/lib/eventos-db";
 import { buildHomeCarouselSlides } from "@/lib/home-carousel";
-import { listPublishedParceiros } from "@/lib/parceiros-db";
+import { listCarouselPublishedParceiros } from "@/lib/parceiros-db";
 import { listHomeEventoHighlights } from "@/lib/eventos-db";
 import { listHomeParceiroHighlights } from "@/lib/parceiros-db";
+import { getFestaJulinaPublishedEvent } from "@/lib/festa-julina";
 import { getAllOficios } from "@/lib/oficios-db";
 import { formatOficioTableDate } from "@/lib/oficios-display";
 import {
@@ -57,21 +61,21 @@ export default async function HomePage() {
     parceirosDestaque = [];
   }
 
-  let carouselConquistas: Awaited<ReturnType<typeof getAllConquistas>> = [];
-  let carouselEventos: Awaited<ReturnType<typeof listUpcomingPublishedEventos>> = [];
-  let carouselParceiros: Awaited<ReturnType<typeof listPublishedParceiros>> = [];
+  let carouselConquistas: Awaited<ReturnType<typeof listCarouselConquistas>> = [];
+  let carouselEventos: Awaited<ReturnType<typeof listCarouselPublishedEventos>> = [];
+  let carouselParceiros: Awaited<ReturnType<typeof listCarouselPublishedParceiros>> = [];
   try {
-    carouselConquistas = await getAllConquistas();
+    carouselConquistas = await listCarouselConquistas();
   } catch {
     carouselConquistas = [];
   }
   try {
-    carouselEventos = await listUpcomingPublishedEventos();
+    carouselEventos = await listCarouselPublishedEventos();
   } catch {
     carouselEventos = [];
   }
   try {
-    carouselParceiros = await listPublishedParceiros();
+    carouselParceiros = await listCarouselPublishedParceiros();
   } catch {
     carouselParceiros = [];
   }
@@ -82,9 +86,18 @@ export default async function HomePage() {
     parceiros: carouselParceiros,
   });
 
+  let festaJulinaEvento: Awaited<ReturnType<typeof getFestaJulinaPublishedEvent>> = null;
+  try {
+    festaJulinaEvento = await getFestaJulinaPublishedEvent();
+  } catch {
+    festaJulinaEvento = null;
+  }
+
   return (
     <>
       <HomeHeroCarousel slides={heroSlides} />
+
+      {festaJulinaEvento && <FestaJulinaHomeBanner evento={festaJulinaEvento} />}
 
       <section className="border-t border-amopark-gray-light bg-amopark-gray-light/30 px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
@@ -145,6 +158,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeFaleConoscoCta />
 
       <HomeNewsletterCta />
 

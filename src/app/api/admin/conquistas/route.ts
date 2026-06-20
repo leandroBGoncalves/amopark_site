@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       description,
       dateLabel,
       colorIndex: Number.isNaN(colorIndex) ? 0 : colorIndex,
+      featuredCarousel: body.featured_carousel === true,
       userId: auth.userId,
     });
 

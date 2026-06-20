@@ -2,9 +2,13 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { EventoCard } from "@/components/EventoCard";
 import { EventosCalendario } from "@/components/EventosCalendario";
+import { FestaJulinaEventosBanner } from "@/components/FestaJulinaHomeBanner";
 import { ROUTES } from "@/lib/constants";
 import { calendarInitialView, todayIsoLocal } from "@/lib/evento-calendar";
 import { listPublishedEventos } from "@/lib/eventos-db";
+import {
+  getFestaJulinaPublishedEvent,
+} from "@/lib/festa-julina";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -35,6 +39,13 @@ export default async function EventosPage() {
   const outrosProximos = upcoming.filter((e) => !e.featuredHome);
   const calView = calendarInitialView(all, today);
 
+  let festaJulinaEvento: Awaited<ReturnType<typeof getFestaJulinaPublishedEvent>> = null;
+  try {
+    festaJulinaEvento = await getFestaJulinaPublishedEvent();
+  } catch {
+    festaJulinaEvento = null;
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold text-amopark-charcoal sm:text-3xl">
@@ -53,6 +64,8 @@ export default async function EventosPage() {
         initialSelectedIso={calView.selectedIso}
         className="mt-10"
       />
+
+      {festaJulinaEvento && <FestaJulinaEventosBanner evento={festaJulinaEvento} />}
 
       {upcoming.length === 0 && past.length === 0 ? (
         <p className="mt-8 rounded-xl border border-dashed border-amopark-gray-light bg-amopark-gray-light/20 px-6 py-5 text-center text-sm text-amopark-charcoal/70">

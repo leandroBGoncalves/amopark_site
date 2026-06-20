@@ -39,4 +39,5 @@ export interface ParceiroRecord {
   sortOrder: number;
   featuredHome: boolean;
   published: boolean;
+  featuredCarousel: boolean;
 }

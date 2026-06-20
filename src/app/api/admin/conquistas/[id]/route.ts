@@ -39,6 +39,9 @@ export async function PATCH(
       const n = parseInt(body.color_index, 10);
       if (!Number.isNaN(n)) patch.color_index = n;
     }
+    if (typeof body.featured_carousel === "boolean") {
+      patch.featured_carousel = body.featured_carousel;
+    }
 
     const record = await updateConquista(id, patch);
     if (!record) {

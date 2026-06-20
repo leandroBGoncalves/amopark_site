@@ -3,8 +3,10 @@ import Link from "next/link";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { notFound } from "next/navigation";
 import { EventoGallery } from "@/components/EventoGallery";
+import { EventoParceirosSection } from "@/components/EventoParceirosSection";
 import { ROUTES } from "@/lib/constants";
 import { getPublishedEventoBySlug } from "@/lib/eventos-db";
+import { getEventoPublicHref } from "@/lib/festa-julina";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -103,6 +105,24 @@ export default async function EventoDetailPage({
           {ev.body}
         </div>
       )}
+
+      {ev.festaJulinaLanding && (
+        <p className="mt-8">
+          <Link
+            href={getEventoPublicHref(ev)}
+            className="text-sm font-medium text-amopark-orange hover:underline"
+          >
+            Ver página especial da Festa Julina →
+          </Link>
+        </p>
+      )}
+
+      <EventoParceirosSection
+        parceiros={ev.parceiros}
+        title="Quem apoia este evento"
+        showParceirosLink
+        embedded
+      />
 
       <EventoGallery midias={ev.midias} className="mt-12" />
     </article>

@@ -5,9 +5,11 @@ import {
   deleteEventoAdmin,
   ensureUniqueEventoSlug,
   getEventoAdminById,
+  replaceEventoParceirosAdmin,
   setEventoCoverAdmin,
   slugifyTitle,
   updateEventoAdmin,
+  type EventoParceirosInput,
 } from "@/lib/eventos-db";
 import { toApiErrorMessage } from "@/lib/supabase/postgrest-error";
 
@@ -62,7 +64,26 @@ export async function PATCH(
     if (typeof body.featured_home === "boolean") {
       patch.featured_home = body.featured_home;
     }
+    if (typeof body.featured_carousel === "boolean") {
+      patch.featured_carousel = body.featured_carousel;
+    }
     if (typeof body.published === "boolean") patch.published = body.published;
+    if (typeof body.festa_julina_landing === "boolean") {
+      patch.festa_julina_landing = body.festa_julina_landing;
+    }
+
+    let eventoParceiros: EventoParceirosInput | undefined;
+    if (body.evento_parceiros && typeof body.evento_parceiros === "object") {
+      const ep = body.evento_parceiros as Record<string, unknown>;
+      eventoParceiros = {
+        patrocinadores: Array.isArray(ep.patrocinadores)
+          ? ep.patrocinadores.filter((x): x is string => typeof x === "string")
+          : [],
+        apoiadores: Array.isArray(ep.apoiadores)
+          ? ep.apoiadores.filter((x): x is string => typeof x === "string")
+          : [],
+      };
+    }
 
     const before =
       Object.keys(patch).length > 0 || body.cover_media_id !== undefined
@@ -100,6 +121,10 @@ export async function PATCH(
     const row = await updateEventoAdmin(id, patch);
     if (!row) {
       return NextResponse.json({ error: "Evento não encontrado." }, { status: 404 });
+    }
+
+    if (eventoParceiros) {
+      await replaceEventoParceirosAdmin(id, eventoParceiros);
     }
 
     const kind =

@@ -76,6 +76,7 @@ export async function POST(req: Request) {
             : null,
       sortOrder: Number.isNaN(sortOrder) ? 0 : sortOrder,
       featuredHome: body.featured_home === true,
+      featuredCarousel: body.featured_carousel === true,
       published: body.published !== false,
       userId: auth.userId,
     });

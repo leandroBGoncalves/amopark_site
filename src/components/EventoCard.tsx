@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Calendar, Star } from "lucide-react";
 import type { EventoListItem } from "@/lib/eventos-types";
+import { getEventoPublicHref } from "@/lib/festa-julina";
 import { cn } from "@/lib/utils";
 
 function formatEventDate(isoDate: string): string {
@@ -26,7 +27,7 @@ export function EventoCard({
 }) {
   return (
     <Link
-      href={`/eventos/${evento.slug}`}
+      href={getEventoPublicHref(evento)}
       className={cn(
         "group flex flex-col overflow-hidden rounded-xl border border-amopark-gray-light bg-white shadow-sm transition-shadow hover:shadow-md",
         highlight && "border-amopark-blue/30",

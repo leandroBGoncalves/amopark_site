@@ -1,6 +1,7 @@
 import type { ConquistaRecord } from "./conquistas-types";
 import { ROUTES } from "./constants";
 import type { EventoListItem } from "./eventos-types";
+import { getEventoPublicHref, isFestaJulinaLanding } from "./festa-julina";
 import { normalizeEventDate } from "./evento-calendar";
 import type { ParceiroRecord } from "./parceiros-types";
 import { parceiroBadgeLabel } from "./parceiros-types";
@@ -64,14 +65,19 @@ function slideFromConquista(c: ConquistaRecord): HomeCarouselSlide {
 
 function slideFromEvento(e: EventoListItem): HomeCarouselSlide {
   const date = formatEventDate(e.eventDate);
+  const festaJulina = isFestaJulinaLanding(e);
   return {
     id: `evento-${e.id}`,
     kind: "evento",
-    badge: e.featuredHome ? "Evento em destaque" : "Próximo evento",
+    badge: festaJulina
+      ? "Festa Julina"
+      : e.featuredHome
+        ? "Evento em destaque"
+        : "Próximo evento",
     title: e.title,
     subtitle: truncate(e.summary, 200) || date,
-    href: `/eventos/${e.slug}`,
-    ctaLabel: "Ver evento",
+    href: getEventoPublicHref(e),
+    ctaLabel: festaJulina ? "Ver detalhes" : "Ver evento",
     imageUrl: e.coverImageUrl,
     panelClass: "bg-gradient-to-br from-amopark-orange/90 to-amopark-orange/55",
   };
@@ -105,7 +111,7 @@ function welcomeSlide(): HomeCarouselSlide {
   };
 }
 
-/** Ordem: conquistas, eventos próximos, parceiros publicados. */
+/** Ordem: conquistas, eventos e parceiros marcados para o carrossel. */
 export function buildHomeCarouselSlides(input: {
   conquistas: ConquistaRecord[];
   eventos: EventoListItem[];

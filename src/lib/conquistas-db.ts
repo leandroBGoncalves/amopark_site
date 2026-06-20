@@ -11,6 +11,7 @@ export interface ConquistaRow {
   description: string;
   date_label: string | null;
   color_index: number;
+  featured_carousel: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +23,7 @@ function rowToRecord(row: ConquistaRow): ConquistaRecord {
     description: row.description,
     dateLabel: row.date_label,
     colorIndex: row.color_index,
+    featuredCarousel: row.featured_carousel ?? false,
     createdAt: row.created_at,
   };
 }
@@ -75,6 +77,26 @@ export async function getAllConquistasWithMeta(): Promise<ConquistasListResult> 
   };
 }
 
+export async function listCarouselConquistas(): Promise<ConquistaRecord[]> {
+  const supabase = createPublicReadClient();
+  const { data, error } = await supabase
+    .from("conquistas")
+    .select("*")
+    .eq("featured_carousel", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (
+      isConquistasTableUnavailable(error) ||
+      (error.message ?? "").toLowerCase().includes("featured_carousel")
+    ) {
+      return [];
+    }
+    throw new Error(formatPostgrestError(error));
+  }
+  return ((data ?? []) as ConquistaRow[]).map(rowToRecord);
+}
+
 export async function getAllConquistas(): Promise<ConquistaRecord[]> {
   const { records } = await getAllConquistasWithMeta();
   return records;
@@ -85,6 +107,7 @@ export async function insertConquista(params: {
   description: string;
   dateLabel: string | null;
   colorIndex: number;
+  featuredCarousel?: boolean;
   userId: string;
 }): Promise<ConquistaRecord> {
   const supabase = createServiceRoleClient();
@@ -99,6 +122,7 @@ export async function insertConquista(params: {
       description: params.description.trim(),
       date_label: params.dateLabel?.trim() || null,
       color_index: clampColorIndex(params.colorIndex),
+      featured_carousel: params.featuredCarousel === true,
       created_by: params.userId,
       created_at: now,
       updated_at: now,
@@ -115,6 +139,7 @@ export type ConquistaUpdatePayload = Partial<{
   description: string;
   date_label: string | null;
   color_index: number;
+  featured_carousel: boolean;
 }>;
 
 export async function updateConquista(
@@ -125,7 +150,8 @@ export async function updateConquista(
     patch.title !== undefined ||
     patch.description !== undefined ||
     patch.date_label !== undefined ||
-    patch.color_index !== undefined;
+    patch.color_index !== undefined ||
+    patch.featured_carousel !== undefined;
   if (!hasAny) {
     const supabase = createPublicReadClient();
     const { data, error } = await supabase
@@ -156,6 +182,9 @@ export async function updateConquista(
   }
   if (patch.color_index !== undefined) {
     row.color_index = clampColorIndex(patch.color_index);
+  }
+  if (patch.featured_carousel !== undefined) {
+    row.featured_carousel = patch.featured_carousel;
   }
 
   const { data, error } = await supabase

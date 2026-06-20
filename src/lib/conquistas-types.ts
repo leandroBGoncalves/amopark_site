@@ -4,5 +4,6 @@ export interface ConquistaRecord {
   description: string;
   dateLabel: string | null;
   colorIndex: number;
+  featuredCarousel: boolean;
   createdAt: string;
 }

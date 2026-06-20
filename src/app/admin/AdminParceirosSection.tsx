@@ -32,6 +32,7 @@ export function AdminParceirosSection({ embedded = false }: { embedded?: boolean
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [featuredHome, setFeaturedHome] = useState(false);
+  const [featuredCarousel, setFeaturedCarousel] = useState(false);
   const [published, setPublished] = useState(true);
   const [editing, setEditing] = useState<ParceiroRow | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -84,6 +85,7 @@ export function AdminParceirosSection({ embedded = false }: { embedded?: boolean
           website_url: websiteUrl.trim() || null,
           sort_order: sortOrder,
           featured_home: featuredHome,
+          featured_carousel: featuredCarousel,
           published,
         }),
       });
@@ -129,6 +131,7 @@ export function AdminParceirosSection({ embedded = false }: { embedded?: boolean
           website_url: String(fd.get("ep_website") ?? "").trim() || null,
           sort_order: parseInt(String(fd.get("ep_sort") ?? "0"), 10) || 0,
           featured_home: fd.get("ep_featured") === "on",
+          featured_carousel: fd.get("ep_carousel") === "on",
           published: fd.get("ep_pub") === "on",
         }),
       });
@@ -336,6 +339,14 @@ export function AdminParceirosSection({ embedded = false }: { embedded?: boolean
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
+              checked={featuredCarousel}
+              onChange={(e) => setFeaturedCarousel(e.target.checked)}
+            />
+            Exibir no carrossel da home
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
               checked={published}
               onChange={(e) => setPublished(e.target.checked)}
             />
@@ -372,6 +383,7 @@ export function AdminParceirosSection({ embedded = false }: { embedded?: boolean
                     {PARCEIRO_TYPE_LABELS[r.partner_type]}
                     {r.published ? " · publicado" : " · rascunho"}
                     {r.featured_home ? " · destaque home" : ""}
+                    {r.featured_carousel ? " · carrossel" : ""}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -500,6 +512,14 @@ export function AdminParceirosSection({ embedded = false }: { embedded?: boolean
                   defaultChecked={editing.featured_home}
                 />
                 Destaque na home
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="ep_carousel"
+                  defaultChecked={editing.featured_carousel}
+                />
+                Exibir no carrossel da home
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="ep_pub" defaultChecked={editing.published} />

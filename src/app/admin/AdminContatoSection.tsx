@@ -13,6 +13,7 @@ import {
 import type { ContatoMensagemRow, ContatoStatus } from "@/lib/contato-types";
 import { CONTATO_STATUS_LABELS } from "@/lib/contato-types";
 import { cn } from "@/lib/utils";
+import { AdminFaleConoscoSection } from "./AdminFaleConoscoSection";
 import { AdminNewsletterSection } from "./AdminNewsletterSection";
 
 type FilterStatus = "todos" | ContatoStatus;
@@ -326,6 +327,8 @@ export function AdminContatoSection({ embedded = false }: { embedded?: boolean }
           {counts.novo} nova{counts.novo !== 1 ? "s" : ""} aguardando leitura
         </p>
       )}
+
+      <AdminFaleConoscoSection />
 
       <AdminNewsletterSection />
     </div>

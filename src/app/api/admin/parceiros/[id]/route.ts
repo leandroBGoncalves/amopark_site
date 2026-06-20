@@ -56,6 +56,9 @@ export async function PATCH(
     else if (typeof body.website_url === "string") patch.website_url = body.website_url;
     if (typeof body.sort_order === "number") patch.sort_order = body.sort_order;
     if (typeof body.featured_home === "boolean") patch.featured_home = body.featured_home;
+    if (typeof body.featured_carousel === "boolean") {
+      patch.featured_carousel = body.featured_carousel;
+    }
     if (typeof body.published === "boolean") patch.published = body.published;
 
     if (body.remove_logo === true) {

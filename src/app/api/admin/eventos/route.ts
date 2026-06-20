@@ -72,6 +72,7 @@ export async function POST(req: Request) {
         : slugifyTitle(title);
     const slug = await ensureUniqueEventoSlug(slugRaw);
     const featuredHome = body.featured_home === true;
+    const featuredCarousel = body.featured_carousel === true;
     const published = body.published !== false;
 
     const row = await insertEventoAdmin({
@@ -83,6 +84,7 @@ export async function POST(req: Request) {
       timeNote: timeNote || null,
       editionLabel: editionLabel || null,
       featuredHome,
+      featuredCarousel,
       published,
       userId: auth.userId,
     });

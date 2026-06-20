@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import type { EventoRow } from "@/lib/eventos-db";
+import type { ParceiroRow } from "@/lib/parceiros-db";
 import { eventoPublicImageUrl } from "@/lib/eventos-media";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
   const [timeNote, setTimeNote] = useState("");
   const [editionLabel, setEditionLabel] = useState("");
   const [featuredHome, setFeaturedHome] = useState(false);
+  const [featuredCarousel, setFeaturedCarousel] = useState(false);
   const [published, setPublished] = useState(true);
   const [editing, setEditing] = useState<EventoRow | null>(null);
   const [midias, setMidias] = useState<MidiaRow[]>([]);
@@ -48,6 +50,13 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
   const [savingEdit, setSavingEdit] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [settingCoverId, setSettingCoverId] = useState<string | null>(null);
+  const [allParceiros, setAllParceiros] = useState<ParceiroRow[]>([]);
+  const [patrocinadorIds, setPatrocinadorIds] = useState<string[]>([]);
+  const [apoiadorIds, setApoiadorIds] = useState<string[]>([]);
+  const [addParceiroId, setAddParceiroId] = useState("");
+  const [addParceiroRole, setAddParceiroRole] = useState<"patrocinador" | "apoiador">(
+    "patrocinador"
+  );
 
   const load = useCallback(async () => {
     setErr(null);
@@ -95,8 +104,34 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
       setVideoUrl("");
       setMediaCaption("");
       loadMidias(editing.id);
+      setAddParceiroId("");
+      setAddParceiroRole("patrocinador");
+
+      fetch(`/api/admin/parceiros?r=${Date.now()}`, { cache: "no-store" })
+        .then((r) => r.json())
+        .then((data) => setAllParceiros(Array.isArray(data) ? data : []))
+        .catch(() => setAllParceiros([]));
+
+      fetch(`/api/admin/eventos/${editing.id}/parceiros`, { cache: "no-store" })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.patrocinadores && data?.apoiadores) {
+            setPatrocinadorIds(data.patrocinadores);
+            setApoiadorIds(data.apoiadores);
+          } else {
+            setPatrocinadorIds([]);
+            setApoiadorIds([]);
+          }
+        })
+        .catch(() => {
+          setPatrocinadorIds([]);
+          setApoiadorIds([]);
+        });
     } else {
       setMidias([]);
+      setPatrocinadorIds([]);
+      setApoiadorIds([]);
+      setAllParceiros([]);
     }
   }, [editing, loadMidias]);
 
@@ -122,6 +157,7 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
           time_note: timeNote.trim() || null,
           edition_label: editionLabel.trim() || null,
           featured_home: featuredHome,
+          featured_carousel: featuredCarousel,
           published,
         }),
       });
@@ -139,6 +175,7 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
       setTimeNote("");
       setEditionLabel("");
       setFeaturedHome(false);
+      setFeaturedCarousel(false);
       setPublished(true);
       await load();
       setEditErr(null);
@@ -173,6 +210,8 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
     const tn = (form.elements.namedItem("ee_time") as HTMLInputElement).value.trim();
     const ed = (form.elements.namedItem("ee_edition") as HTMLInputElement).value.trim();
     const fh = (form.elements.namedItem("ee_featured") as HTMLInputElement).checked;
+    const fc = (form.elements.namedItem("ee_carousel") as HTMLInputElement).checked;
+    const fj = (form.elements.namedItem("ee_festa_julina") as HTMLInputElement).checked;
     const pub = (form.elements.namedItem("ee_pub") as HTMLInputElement).checked;
 
     setSavingEdit(true);
@@ -190,7 +229,13 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
           time_note: tn || null,
           edition_label: ed || null,
           featured_home: fh,
+          featured_carousel: fc,
+          festa_julina_landing: fj,
           published: pub,
+          evento_parceiros: {
+            patrocinadores: patrocinadorIds,
+            apoiadores: apoiadorIds,
+          },
         }),
       });
       const data = await res.json();
@@ -461,6 +506,14 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
+              checked={featuredCarousel}
+              onChange={(e) => setFeaturedCarousel(e.target.checked)}
+            />
+            Exibir no carrossel da home
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
               checked={published}
               onChange={(e) => setPublished(e.target.checked)}
             />
@@ -499,6 +552,8 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
                     {r.event_date}
                     {r.published ? " · publicado" : " · rascunho"}
                     {r.featured_home ? " · destaque home" : ""}
+                    {r.featured_carousel ? " · carrossel" : ""}
+                    {r.festa_julina_landing ? " · página Festa Julina" : ""}
                   </p>
                   <p className="mt-1 text-xs text-amopark-charcoal/50">
                     /eventos/{r.slug}
@@ -627,7 +682,174 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
                   defaultValue={editing.body}
                   className="mt-1 w-full rounded-lg border border-amopark-gray-light px-3 py-2 text-sm"
                 />
+                <p className="mt-1 text-xs text-amopark-charcoal/60">
+                  Use este campo para detalhes e novidades do evento — aparece na página
+                  do evento e na Festa Julina, se marcada abaixo.
+                </p>
               </div>
+
+              <div className="rounded-lg border border-amopark-orange/30 bg-amopark-orange/5 p-4 space-y-4">
+                <label className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="ee_festa_julina"
+                    defaultChecked={editing.festa_julina_landing}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="font-semibold text-amopark-charcoal">
+                      Página especial Festa Julina
+                    </span>
+                    <span className="mt-0.5 block text-xs text-amopark-charcoal/65">
+                      Exibe este evento em <strong>/festa-julina</strong> (só um evento
+                      por vez). Os links na home apontam para lá automaticamente.
+                    </span>
+                  </span>
+                </label>
+
+                <div className="border-t border-amopark-orange/20 pt-4">
+                  <p className="text-sm font-semibold text-amopark-charcoal">
+                    Patrocinadores e apoiadores
+                  </p>
+                  <p className="mt-1 text-xs text-amopark-charcoal/65">
+                    Escolha parceiros já cadastrados na aba Parceiros. Eles aparecem na
+                    página deste evento e na Festa Julina, se aplicável.
+                  </p>
+
+                  {allParceiros.length === 0 ? (
+                    <p className="mt-3 text-xs text-amopark-charcoal/60">
+                      Nenhum parceiro cadastrado. Cadastre na aba{" "}
+                      <strong>Parceiros</strong> primeiro.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <select
+                          value={addParceiroId}
+                          onChange={(e) => setAddParceiroId(e.target.value)}
+                          className="min-w-[180px] flex-1 rounded-lg border border-amopark-gray-light px-2 py-1.5 text-sm"
+                        >
+                          <option value="">Selecionar parceiro…</option>
+                          {allParceiros.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={addParceiroRole}
+                          onChange={(e) =>
+                            setAddParceiroRole(
+                              e.target.value as "patrocinador" | "apoiador"
+                            )
+                          }
+                          className="rounded-lg border border-amopark-gray-light px-2 py-1.5 text-sm"
+                        >
+                          <option value="patrocinador">Patrocinador</option>
+                          <option value="apoiador">Apoiador</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!addParceiroId) return;
+                            if (addParceiroRole === "patrocinador") {
+                              setPatrocinadorIds((prev) =>
+                                prev.includes(addParceiroId)
+                                  ? prev
+                                  : [...prev, addParceiroId]
+                              );
+                              setApoiadorIds((prev) =>
+                                prev.filter((id) => id !== addParceiroId)
+                              );
+                            } else {
+                              setApoiadorIds((prev) =>
+                                prev.includes(addParceiroId)
+                                  ? prev
+                                  : [...prev, addParceiroId]
+                              );
+                              setPatrocinadorIds((prev) =>
+                                prev.filter((id) => id !== addParceiroId)
+                              );
+                            }
+                            setAddParceiroId("");
+                          }}
+                          className="rounded-lg border border-amopark-green/40 px-3 py-1.5 text-xs font-medium text-amopark-green hover:bg-amopark-green/10"
+                        >
+                          Adicionar
+                        </button>
+                      </div>
+
+                      {(patrocinadorIds.length > 0 || apoiadorIds.length > 0) && (
+                        <div className="mt-4 space-y-3 text-sm">
+                          {patrocinadorIds.length > 0 && (
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-amopark-charcoal/70">
+                                Patrocinadores
+                              </p>
+                              <ul className="mt-1 space-y-1">
+                                {patrocinadorIds.map((id) => {
+                                  const p = allParceiros.find((x) => x.id === id);
+                                  return (
+                                    <li
+                                      key={id}
+                                      className="flex items-center justify-between rounded border border-amopark-gray-light bg-white px-2 py-1"
+                                    >
+                                      <span>{p?.name ?? id}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setPatrocinadorIds((prev) =>
+                                            prev.filter((x) => x !== id)
+                                          )
+                                        }
+                                        className="text-xs text-red-600 hover:underline"
+                                      >
+                                        Remover
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
+                          {apoiadorIds.length > 0 && (
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-amopark-charcoal/70">
+                                Apoiadores
+                              </p>
+                              <ul className="mt-1 space-y-1">
+                                {apoiadorIds.map((id) => {
+                                  const p = allParceiros.find((x) => x.id === id);
+                                  return (
+                                    <li
+                                      key={id}
+                                      className="flex items-center justify-between rounded border border-amopark-gray-light bg-white px-2 py-1"
+                                    >
+                                      <span>{p?.name ?? id}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setApoiadorIds((prev) =>
+                                            prev.filter((x) => x !== id)
+                                          )
+                                        }
+                                        className="text-xs text-red-600 hover:underline"
+                                      >
+                                        Remover
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -635,6 +857,14 @@ export function AdminEventosSection({ embedded = false }: { embedded?: boolean }
                   defaultChecked={editing.featured_home}
                 />
                 Destaque na home
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="ee_carousel"
+                  defaultChecked={editing.featured_carousel}
+                />
+                Exibir no carrossel da home
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input

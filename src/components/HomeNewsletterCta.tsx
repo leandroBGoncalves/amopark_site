@@ -90,7 +90,7 @@ export function HomeNewsletterCta() {
           <div className="text-white">
             <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide backdrop-blur-sm">
               <Sparkles className="h-3.5 w-3.5 text-amopark-yellow" />
-              Gratuito · só o que importa
+              Só o que importa
             </p>
             <h2
               id="newsletter-cta-heading"
